@@ -7,7 +7,7 @@
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Bash](https://img.shields.io/badge/Bash-shell-4EAA25?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
 [![Linux](https://img.shields.io/badge/Linux-ready-FCC624?logo=linux&logoColor=black)](https://www.linux.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue)](#license)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 </div>
 
@@ -82,3 +82,7 @@ organized_files/
 ## 🛠️ Built with
 
 Bash · Python · Linux
+
+## 📄 License
+
+Released under the [MIT License](LICENSE).
