@@ -42,6 +42,15 @@ Existing subfolders are left untouched, and name collisions are resolved automat
 
 # Send organized files to a custom destination
 ./organizer.sh ~/Downloads -o ~/Sorted
+
+# Copy instead of move — originals are left untouched
+./organizer.sh ~/Downloads --copy
+
+# Also organize files inside subdirectories
+./organizer.sh ~/Downloads --recursive
+
+# Undo the last organize run (moves files back, deletes copies)
+./organizer.sh ~/Downloads --undo
 ```
 
 Or run the Python script directly:
@@ -49,6 +58,8 @@ Or run the Python script directly:
 ```bash
 python3 organizer.py ~/Downloads
 ```
+
+Every real run (not `--dry-run`) writes a `.organizer_log.json` manifest into the destination folder, which is what `--undo` reads to reverse the operation. A single failed file (e.g. a permission error) is reported without aborting the rest of the run.
 
 ## 🧪 Try the demo
 
@@ -78,6 +89,15 @@ organized_files/
 ```
 
 </details>
+
+## 🧰 Development
+
+Tests are written with [pytest](https://pytest.org):
+
+```bash
+pip install pytest
+pytest tests/
+```
 
 ## 🛠️ Built with
 
