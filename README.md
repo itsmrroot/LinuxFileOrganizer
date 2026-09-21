@@ -30,27 +30,35 @@ Existing subfolders are left untouched, and name collisions are resolved automat
 
 ## 📦 Installation
 
-Install it like any other command-line tool. [pipx](https://pipx.pypa.io) is recommended since it keeps CLI tools isolated from your system Python:
-
 ```bash
 git clone https://github.com/itsmrroot/LinuxFileOrganizer.git
 cd LinuxFileOrganizer
-pipx install .
+./install.sh
 ```
 
-No pipx? Plain pip works too:
+This copies `forganize` into `~/.local/bin` and makes it executable. It only needs `python3` — no `pip`, no `pipx`, nothing else to install — so it works the same on Kali, Ubuntu, Debian, Fedora, Arch, or any other distro. If `~/.local/bin` isn't already on your `$PATH`, the script tells you the one line to add to your shell profile.
+
+Run `forganize -h` to confirm it worked.
+
+<details>
+<summary>Prefer pip/pipx instead?</summary>
 
 ```bash
+pipx install .
+# or
 pip install --user .
 ```
 
-Either way, this puts a `forganize` command on your `$PATH`. Run `forganize -h` to confirm it worked.
+Note that many distros (Debian 12+/Ubuntu 23.04+/Kali included) block plain `pip install` system-wide with an "externally-managed-environment" error, and `pipx` itself isn't preinstalled everywhere — install it first with your distro's package manager (`sudo apt install pipx`, `sudo dnf install pipx`, `sudo pacman -S python-pipx`, ...) if `pipx install .` says command not found. This is why `./install.sh` is the more reliable default.
+
+</details>
 
 ### Uninstalling
 
 ```bash
+./uninstall.sh
+# or, if installed with pipx/pip
 pipx uninstall file-organizer
-# or, if installed with pip
 pip uninstall file-organizer
 ```
 
