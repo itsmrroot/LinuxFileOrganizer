@@ -28,44 +28,55 @@ Point it at a messy directory and it sorts every file into `organized_files/` by
 
 Existing subfolders are left untouched, and name collisions are resolved automatically (`file_1.ext`, `file_2.ext`, ...).
 
+## 📦 Installation
+
+Install it like any other command-line tool. [pipx](https://pipx.pypa.io) is recommended since it keeps CLI tools isolated from your system Python:
+
+```bash
+git clone https://github.com/itsmrroot/LinuxFileOrganizer.git
+cd LinuxFileOrganizer
+pipx install .
+```
+
+No pipx? Plain pip works too:
+
+```bash
+pip install --user .
+```
+
+Either way, this puts a `forganize` command on your `$PATH`. Run `forganize -h` to confirm it worked.
+
 ## 🚀 Usage
 
 ```bash
-# Organize the current directory
-./organizer.sh
-
-# Organize a specific directory
-./organizer.sh ~/Downloads
-
-# Preview what would happen — nothing is moved
-./organizer.sh ~/Downloads --dry-run
-
-# Send organized files to a custom destination
-./organizer.sh ~/Downloads -o ~/Sorted
-
-# Copy instead of move — originals are left untouched
-./organizer.sh ~/Downloads --copy
-
-# Also organize files inside subdirectories
-./organizer.sh ~/Downloads --recursive
-
-# Undo the last organize run (moves files back, deletes copies)
-./organizer.sh ~/Downloads --undo
+forganize -h                        # show all options
+forganize                           # organize the current directory
+forganize ~/Downloads               # organize a specific directory
+forganize ~/Downloads -n            # preview only — nothing is moved (--dry-run)
+forganize ~/Downloads -c            # copy instead of move (--copy)
+forganize ~/Downloads -r            # also organize subdirectories (--recursive)
+forganize ~/Downloads -o ~/Sorted   # send output to a custom destination (--output)
+forganize ~/Downloads -u            # undo the last organize run (--undo)
+forganize -v                        # print the installed version
 ```
 
-Or run the Python script directly:
+Prefer not to install anything? Run it straight from a clone:
 
 ```bash
+./organizer.sh ~/Downloads
+# or
 python3 organizer.py ~/Downloads
 ```
 
-Every real run (not `--dry-run`) writes a `.organizer_log.json` manifest into the destination folder, which is what `--undo` reads to reverse the operation. A single failed file (e.g. a permission error) is reported without aborting the rest of the run.
+Every real run (not `-n`/`--dry-run`) writes a `.organizer_log.json` manifest into the destination folder, which is what `-u`/`--undo` reads to reverse the operation. A single failed file (e.g. a permission error) is reported without aborting the rest of the run.
 
 ## 🧪 Try the demo
 
 A [`demo/`](demo) folder with sample empty files is included so you can see it in action:
 
 ```bash
+forganize demo
+# or, without installing:
 ./organizer.sh demo
 ```
 

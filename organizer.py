@@ -15,6 +15,7 @@ FILE_CATEGORIES = {
 
 OTHER_CATEGORY = "Others"
 LOG_FILENAME = ".organizer_log.json"
+__version__ = "1.0.0"
 
 
 def categorize(extension: str) -> str:
@@ -164,13 +165,27 @@ def print_failures(failures: list) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Organize files in a directory by type.")
-    parser.add_argument("source", nargs="?", default=".", help="Directory to organize (default: current directory)")
-    parser.add_argument("-o", "--output", default=None, help="Destination directory (default: <source>/organized_files)")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would happen without moving files")
-    parser.add_argument("--copy", action="store_true", help="Copy files instead of moving them")
-    parser.add_argument("--recursive", action="store_true", help="Also organize files inside subdirectories")
-    parser.add_argument("--undo", action="store_true", help="Undo a previous organize run into the destination directory")
+    parser = argparse.ArgumentParser(
+        description="Organize files in a directory by type.",
+        epilog=(
+            "examples:\n"
+            "  forganize                       organize the current directory\n"
+            "  forganize ~/Downloads           organize a specific directory\n"
+            "  forganize ~/Downloads -n        preview only, nothing is moved\n"
+            "  forganize ~/Downloads -c        copy instead of move\n"
+            "  forganize ~/Downloads -r        also organize subdirectories\n"
+            "  forganize ~/Downloads -o ~/Tidy send output to a custom folder\n"
+            "  forganize ~/Downloads -u        undo the last organize run\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("source", nargs="?", default=".", help="directory to organize (default: current directory)")
+    parser.add_argument("-o", "--output", default=None, help="destination directory (default: <source>/organized_files)")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="show what would happen without moving files")
+    parser.add_argument("-c", "--copy", action="store_true", help="copy files instead of moving them")
+    parser.add_argument("-r", "--recursive", action="store_true", help="also organize files inside subdirectories")
+    parser.add_argument("-u", "--undo", action="store_true", help="undo a previous organize run into the destination directory")
+    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
     args = parser.parse_args()
 
     source_dir = Path(args.source).expanduser().resolve()

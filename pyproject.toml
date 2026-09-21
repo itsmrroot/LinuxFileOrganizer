@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "file-organizer"
+version = "1.0.0"
+description = "Automatically organize files by type into folders."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Bashar Salmo" }]
+
+[project.urls]
+Homepage = "https://github.com/itsmrroot/LinuxFileOrganizer"
+
+[project.scripts]
+forganize = "organizer:main"
+
+[tool.setuptools]
+py-modules = ["organizer"]
