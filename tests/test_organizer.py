@@ -115,6 +115,24 @@ def test_organize_recursive_finds_nested_files(tmp_path):
     assert (dest / "Archives" / "archive.zip").exists()
 
 
+def test_organize_by_date_nests_into_year_month_folders(tmp_path):
+    import os
+    from datetime import datetime
+
+    target = tmp_path / "resume.pdf"
+    target.write_text("resume content")
+    mtime = datetime(2024, 3, 15).timestamp()
+    os.utime(target, (mtime, mtime))
+    dest = tmp_path / "organized_files"
+
+    moved, failures, duplicates, _ = organizer.organize(tmp_path, dest, by_date=True)
+
+    assert failures == []
+    assert duplicates == []
+    assert moved == {"Documents/2024/03": ["resume.pdf"]}
+    assert (dest / "Documents" / "2024" / "03" / "resume.pdf").exists()
+
+
 def test_organize_second_run_ignores_already_organized_files(tmp_path):
     (tmp_path / "backup.zip").write_text("x")
     dest = tmp_path / "organized_files"

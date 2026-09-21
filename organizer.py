@@ -6,6 +6,7 @@ import os
 import shutil
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 FILE_CATEGORIES = {
@@ -117,6 +118,7 @@ def organize(
     categories: dict = None,
     skip_paths: set = None,
     min_age: float = 0,
+    by_date: bool = False,
 ):
     moved = {}
     duplicates = []
@@ -155,7 +157,15 @@ def organize(
                 continue
 
         category = categorize(entry.suffix, categories)
-        moved.setdefault(category, []).append(entry.name)
+        category_key = category
+        if by_date:
+            try:
+                mtime = datetime.fromtimestamp(entry.stat().st_mtime)
+                category_key = f"{category}/{mtime:%Y}/{mtime:%m}"
+            except OSError:
+                pass
+
+        moved.setdefault(category_key, []).append(entry.name)
         if file_hash:
             seen_hashes.add(file_hash)
 
@@ -163,7 +173,7 @@ def organize(
             continue
 
         try:
-            target_folder = dest_dir / category
+            target_folder = dest_dir / category_key
             target_folder.mkdir(parents=True, exist_ok=True)
             target_path = resolve_conflict(target_folder / entry.name)
 
@@ -175,9 +185,9 @@ def organize(
                 log_entries.append({"action": "move", "src": resolved, "dest": str(target_path.resolve())})
             processed.add(resolved)
         except (OSError, shutil.Error) as exc:
-            moved[category].remove(entry.name)
-            if not moved[category]:
-                del moved[category]
+            moved[category_key].remove(entry.name)
+            if not moved[category_key]:
+                del moved[category_key]
             failures.append((entry.name, str(exc)))
 
     if log_entries:
@@ -279,6 +289,7 @@ def watch(
     categories: dict,
     interval: float,
     min_age: float,
+    by_date: bool = False,
 ) -> None:
     print(f"👀 Watching '{source_dir}' every {interval:g}s — press Ctrl+C to stop.")
     skip_paths = set()
@@ -295,6 +306,7 @@ def watch(
                 categories=categories,
                 skip_paths=skip_paths,
                 min_age=min_age,
+                by_date=by_date,
             )
             skip_paths |= processed
             if moved or failures or duplicates:
@@ -317,6 +329,7 @@ def main():
             "  forganize ~/Downloads -o ~/Tidy send output to a custom folder\n"
             "  forganize ~/Downloads -u        undo the last organize run\n"
             "  forganize ~/Downloads -w        watch and organize new files continuously\n"
+            "  forganize ~/Downloads -d        organize into Category/YYYY/MM folders\n"
             "  forganize --print-config        print the active categories as JSON\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -333,6 +346,7 @@ def main():
     parser.add_argument("--remove-duplicates", action="store_true", help="delete source files that duplicate a file already organized (move mode only)")
     parser.add_argument("-w", "--watch", action="store_true", help="watch the directory and organize new files as they appear")
     parser.add_argument("-i", "--interval", type=float, default=5.0, help="seconds between scans in watch mode (default: 5)")
+    parser.add_argument("-d", "--by-date", action="store_true", help="organize into Category/YYYY/MM folders using each file's modified date")
     parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
     args = parser.parse_args()
 
@@ -388,6 +402,7 @@ def main():
             categories=categories,
             interval=args.interval,
             min_age=min(2.0, args.interval),
+            by_date=args.by_date,
         )
         return
 
@@ -400,6 +415,7 @@ def main():
         dedupe=args.dedupe,
         remove_duplicates=args.remove_duplicates,
         categories=categories,
+        by_date=args.by_date,
     )
 
     if not moved and not failures and not duplicates:

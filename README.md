@@ -68,6 +68,7 @@ forganize ~/Downloads -r            # also organize subdirectories (--recursive)
 forganize ~/Downloads -o ~/Sorted   # send output to a custom destination (--output)
 forganize ~/Downloads -u            # undo the last organize run (--undo)
 forganize ~/Downloads -w            # watch and organize new files continuously (--watch)
+forganize ~/Downloads -d            # nest into Category/YYYY/MM by modified date (--by-date)
 forganize -v                        # print the installed version
 ```
 
@@ -80,6 +81,15 @@ python3 organizer.py ~/Downloads
 ```
 
 Every real run (not `-n`/`--dry-run`) writes a `.organizer_log.json` manifest into the destination folder, which is what `-u`/`--undo` reads to reverse the operation. A single failed file (e.g. a permission error) is reported without aborting the rest of the run.
+
+## 📅 Organize by date
+
+Add `-d`/`--by-date` to nest each category by the file's last-modified year and month — handy for photo dumps or screenshots that pile up over time:
+
+```bash
+forganize ~/Pictures --by-date
+# → organized_files/Images/2026/09/photo.jpg
+```
 
 ## 🔁 Duplicate detection
 
