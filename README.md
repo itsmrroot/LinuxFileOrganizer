@@ -15,7 +15,7 @@
 
 ## ✨ What it does
 
-Point it at a messy directory and it sorts every file into `organized_files/` by category — no more digging through a Downloads folder full of clutter.
+Point it at a messy directory and it sorts every file into category folders — `Documents/`, `Images/`, `Videos/`, ... — right inside that same directory. No more digging through a Downloads folder full of clutter, and no extra wrapper folder to dig through either.
 
 | Category | Extensions |
 |---|---|
@@ -73,7 +73,7 @@ forganize ~/Downloads               # organize a specific directory
 forganize ~/Downloads -n            # preview only — nothing is moved (--dry-run)
 forganize ~/Downloads -c            # copy instead of move (--copy)
 forganize ~/Downloads -r            # also organize subdirectories (--recursive)
-forganize ~/Downloads -o ~/Sorted   # send output to a custom destination (--output)
+forganize ~/Downloads -o ~/Sorted   # send output elsewhere instead of sorting in place (--output)
 forganize ~/Downloads -u            # undo the last organize run (--undo)
 forganize ~/Downloads -w            # watch and organize new files continuously (--watch)
 forganize ~/Downloads -d            # nest into Category/YYYY/MM by modified date (--by-date)
@@ -88,7 +88,9 @@ Prefer not to install anything? Run it straight from a clone:
 python3 organizer.py ~/Downloads
 ```
 
-Every real run (not `-n`/`--dry-run`) writes a `.organizer_log.json` manifest into the destination folder, which is what `-u`/`--undo` reads to reverse the operation. A single failed file (e.g. a permission error) is reported without aborting the rest of the run.
+By default, files are sorted directly into the folder you point it at — `forganize ~/Downloads` creates `~/Downloads/Documents/`, `~/Downloads/Images/`, etc. right there. Pass `-o` if you'd rather send everything to a separate folder instead.
+
+Every real run (not `-n`/`--dry-run`) writes a `.organizer_log.json` manifest into the destination folder, which is what `-u`/`--undo` reads to reverse the operation — moving files back out and removing the now-empty category folders, without ever touching the destination folder itself. A single failed file (e.g. a permission error) is reported without aborting the rest of the run.
 
 ## 📅 Organize by date
 
@@ -96,12 +98,12 @@ Add `-d`/`--by-date` to nest each category by the file's last-modified year and 
 
 ```bash
 forganize ~/Pictures --by-date
-# → organized_files/Images/2026/09/photo.jpg
+# → ~/Pictures/Images/2026/09/photo.jpg
 ```
 
 ## 🔁 Duplicate detection
 
-Every real run hashes new files with SHA-256 and compares them against everything already in the destination. An exact content match is reported as a duplicate and left where it is — it's never silently renamed alongside a copy of itself.
+Every real run hashes new files with SHA-256 and compares them against everything already organized. An exact content match is reported as a duplicate and left where it is — it's never silently renamed alongside a copy of itself.
 
 ```bash
 forganize ~/Downloads --no-dedupe          # disable hashing (faster on huge folders)
@@ -156,7 +158,7 @@ forganize demo
 ```
 ✓ Organized 6 file(s) successfully!
 
-organized_files/
+demo/
 ├── Archives/
 │   └── backup.zip
 ├── Documents/
@@ -170,6 +172,8 @@ organized_files/
 ```
 
 </details>
+
+Run `forganize demo -u` afterward to put the demo folder back the way it was.
 
 ## 🧰 Development
 

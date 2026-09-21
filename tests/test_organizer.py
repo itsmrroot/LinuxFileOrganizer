@@ -145,6 +145,68 @@ def test_organize_second_run_ignores_already_organized_files(tmp_path):
     assert duplicates == []
 
 
+def test_organize_in_place_sorts_directly_into_source(tmp_path):
+    (tmp_path / "resume.pdf").write_text("resume content")
+    (tmp_path / "photo.png").write_text("photo content")
+
+    moved, failures, duplicates, _ = organizer.organize(tmp_path, tmp_path)
+
+    assert failures == []
+    assert duplicates == []
+    assert moved == {"Documents": ["resume.pdf"], "Images": ["photo.png"]}
+    assert (tmp_path / "Documents" / "resume.pdf").exists()
+    assert (tmp_path / "Images" / "photo.png").exists()
+
+
+def test_organize_in_place_second_run_does_not_reprocess_organized_files(tmp_path):
+    (tmp_path / "resume.pdf").write_text("resume content")
+
+    organizer.organize(tmp_path, tmp_path)
+    moved, failures, duplicates, _ = organizer.organize(tmp_path, tmp_path)
+
+    assert moved == {}
+    assert failures == []
+    assert duplicates == []
+
+
+def test_organize_in_place_does_not_flag_other_loose_files_as_duplicates(tmp_path):
+    (tmp_path / "resume.pdf").write_text("same content")
+    (tmp_path / "cv.pdf").write_text("same content")
+
+    moved, failures, duplicates, _ = organizer.organize(tmp_path, tmp_path)
+
+    assert failures == []
+    # Both are loose top-level files at the time hashing starts, so
+    # neither is "already organized" -- only the second one processed
+    # collides with the first's freshly recorded hash.
+    assert sorted(moved["Documents"] + duplicates) == ["cv.pdf", "resume.pdf"]
+    assert len(duplicates) == 1
+
+
+def test_undo_in_place_restores_files_without_deleting_source_dir(tmp_path):
+    (tmp_path / "resume.pdf").write_text("content")
+    organizer.organize(tmp_path, tmp_path)
+
+    restored, failures = organizer.undo(tmp_path, in_place=True)
+
+    assert restored == 1
+    assert failures == []
+    assert tmp_path.exists()
+    assert (tmp_path / "resume.pdf").read_text() == "content"
+    assert not (tmp_path / "Documents").exists()
+
+
+def test_undo_in_place_cleans_up_nested_by_date_folders(tmp_path):
+    (tmp_path / "resume.pdf").write_text("content")
+    organizer.organize(tmp_path, tmp_path, by_date=True)
+
+    restored, failures = organizer.undo(tmp_path, in_place=True)
+
+    assert restored == 1
+    assert failures == []
+    assert not (tmp_path / "Documents").exists()
+
+
 def test_organize_flags_duplicate_content_and_leaves_it_in_place(tmp_path):
     (tmp_path / "original.txt").write_text("same content")
     dest = tmp_path / "organized_files"

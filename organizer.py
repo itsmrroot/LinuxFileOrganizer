@@ -20,7 +20,7 @@ FILE_CATEGORIES = {
 OTHER_CATEGORY = "Others"
 LOG_FILENAME = ".organizer_log.json"
 DEFAULT_CONFIG_PATH = Path(os.environ.get("XDG_CONFIG_HOME", "~/.config")).expanduser() / "forganize" / "config.json"
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 
 def categorize(extension: str, categories: dict = None) -> str:
@@ -68,29 +68,37 @@ def hash_file(path: Path, chunk_size: int = 65536) -> str:
     return digest.hexdigest()
 
 
-def build_hash_index(dest_dir: Path) -> set:
+def category_dirs(dest_dir: Path, categories: dict = None) -> set:
+    active = FILE_CATEGORIES if categories is None else categories
+    names = set(active) | {OTHER_CATEGORY}
+    return {(dest_dir / name).resolve() for name in names}
+
+
+def build_hash_index(category_roots: set) -> set:
     hashes = set()
-    if not dest_dir.exists():
-        return hashes
-    for path in dest_dir.rglob("*"):
-        if path.is_file() and path.name != LOG_FILENAME:
-            try:
-                hashes.add(hash_file(path))
-            except OSError:
-                continue
+    for root in category_roots:
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path.is_file():
+                try:
+                    hashes.add(hash_file(path))
+                except OSError:
+                    continue
     return hashes
 
 
-def iter_files(source_dir: Path, dest_dir: Path, recursive: bool):
+def iter_files(source_dir: Path, category_roots: set, recursive: bool):
     if recursive:
         candidates = sorted(p for p in source_dir.rglob("*") if p.is_file())
     else:
         candidates = sorted(p for p in source_dir.iterdir() if p.is_file())
 
-    dest_resolved = dest_dir.resolve()
     for entry in candidates:
+        if entry.name == LOG_FILENAME:
+            continue
         resolved = entry.resolve()
-        if resolved == dest_resolved or dest_resolved in resolved.parents:
+        if any(resolved == root or root in resolved.parents for root in category_roots):
             continue
         yield entry
 
@@ -126,9 +134,10 @@ def organize(
     log_entries = []
     processed = set()
     skip_paths = skip_paths or set()
-    seen_hashes = build_hash_index(dest_dir) if dedupe else set()
+    roots = category_dirs(dest_dir, categories)
+    seen_hashes = build_hash_index(roots) if dedupe else set()
 
-    for entry in iter_files(source_dir, dest_dir, recursive):
+    for entry in iter_files(source_dir, roots, recursive):
         resolved = str(entry.resolve())
         if resolved in skip_paths:
             continue
@@ -196,7 +205,7 @@ def organize(
     return moved, failures, duplicates, processed
 
 
-def undo(dest_dir: Path):
+def undo(dest_dir: Path, in_place: bool = False):
     log_path = dest_dir / LOG_FILENAME
     if not log_path.exists():
         return 0, []
@@ -229,14 +238,21 @@ def undo(dest_dir: Path):
     if dest_dir.exists():
         for child in sorted(dest_dir.iterdir()):
             if child.is_dir():
+                for sub in sorted(child.rglob("*"), reverse=True):
+                    if sub.is_dir():
+                        try:
+                            sub.rmdir()
+                        except OSError:
+                            pass
                 try:
                     child.rmdir()
                 except OSError:
                     pass
-        try:
-            dest_dir.rmdir()
-        except OSError:
-            pass
+        if not in_place:
+            try:
+                dest_dir.rmdir()
+            except OSError:
+                pass
 
     return restored, failures
 
@@ -335,7 +351,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("source", nargs="?", default=".", help="directory to organize (default: current directory)")
-    parser.add_argument("-o", "--output", default=None, help="destination directory (default: <source>/organized_files)")
+    parser.add_argument("-o", "--output", default=None, help="destination directory (default: sort in place, directly inside <source>)")
     parser.add_argument("-n", "--dry-run", action="store_true", help="show what would happen without moving files")
     parser.add_argument("-c", "--copy", action="store_true", help="copy files instead of moving them")
     parser.add_argument("-r", "--recursive", action="store_true", help="also organize files inside subdirectories")
@@ -378,10 +394,10 @@ def main():
         print(f"Error: '{source_dir}' is not a valid directory", file=sys.stderr)
         sys.exit(1)
 
-    dest_dir = Path(args.output).expanduser().resolve() if args.output else source_dir / "organized_files"
+    dest_dir = Path(args.output).expanduser().resolve() if args.output else source_dir
 
     if args.undo:
-        restored, failures = undo(dest_dir)
+        restored, failures = undo(dest_dir, in_place=(dest_dir == source_dir))
         if restored == 0 and not failures:
             print("Nothing to undo.")
         else:
