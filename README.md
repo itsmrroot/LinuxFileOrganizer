@@ -46,6 +46,16 @@ pip install --user .
 
 Either way, this puts a `forganize` command on your `$PATH`. Run `forganize -h` to confirm it worked.
 
+### Uninstalling
+
+```bash
+pipx uninstall file-organizer
+# or, if installed with pip
+pip uninstall file-organizer
+```
+
+This removes the `forganize` command. If you also cloned the repo, delete that folder separately (e.g. `rm -rf LinuxFileOrganizer`).
+
 ## 🚀 Usage
 
 ```bash
