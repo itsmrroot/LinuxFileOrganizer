@@ -1,0 +1,11 @@
+[Unit]
+Description=File Organizer (watch mode) for %I
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/forganize %I --watch
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

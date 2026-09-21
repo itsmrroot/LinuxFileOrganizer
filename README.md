@@ -26,7 +26,7 @@ Point it at a messy directory and it sorts every file into `organized_files/` by
 | 🎵 **Music** | `mp3` `wav` `flac` `aac` `ogg` `m4a` |
 | 📦 **Others** | anything that doesn't match above |
 
-Existing subfolders are left untouched, and name collisions are resolved automatically (`file_1.ext`, `file_2.ext`, ...).
+Existing subfolders are left untouched, and name collisions are resolved automatically (`file_1.ext`, `file_2.ext`, ...). Files that are byte-for-byte duplicates of something already organized are detected by content hash and skipped instead of renamed.
 
 ## 📦 Installation
 
@@ -67,6 +67,7 @@ forganize ~/Downloads -c            # copy instead of move (--copy)
 forganize ~/Downloads -r            # also organize subdirectories (--recursive)
 forganize ~/Downloads -o ~/Sorted   # send output to a custom destination (--output)
 forganize ~/Downloads -u            # undo the last organize run (--undo)
+forganize ~/Downloads -w            # watch and organize new files continuously (--watch)
 forganize -v                        # print the installed version
 ```
 
@@ -80,9 +81,50 @@ python3 organizer.py ~/Downloads
 
 Every real run (not `-n`/`--dry-run`) writes a `.organizer_log.json` manifest into the destination folder, which is what `-u`/`--undo` reads to reverse the operation. A single failed file (e.g. a permission error) is reported without aborting the rest of the run.
 
+## 🔁 Duplicate detection
+
+Every real run hashes new files with SHA-256 and compares them against everything already in the destination. An exact content match is reported as a duplicate and left where it is — it's never silently renamed alongside a copy of itself.
+
+```bash
+forganize ~/Downloads --no-dedupe          # disable hashing (faster on huge folders)
+forganize ~/Downloads --remove-duplicates  # also delete duplicate sources (move mode only)
+```
+
+## 🗂️ Custom categories
+
+Don't like the built-in categories? Point `forganize` at your own JSON file:
+
+```bash
+forganize --print-config > ~/.config/forganize/config.json   # start from the defaults
+$EDITOR ~/.config/forganize/config.json                      # edit categories/extensions
+forganize ~/Downloads                                        # picked up automatically
+```
+
+`~/.config/forganize/config.json` is used automatically when present. Pass `-f/--config path/to/file.json` to use a different file for a single run. The format is `{"Category": ["ext1", "ext2"]}` — the leading dot on extensions is optional.
+
+## 👀 Watch mode
+
+Leave it running and it organizes new files as they land, skipping anything still mid-write:
+
+```bash
+forganize ~/Downloads --watch                # poll every 5s (default)
+forganize ~/Downloads --watch --interval 30  # poll every 30s instead
+```
+
+Press `Ctrl+C` to stop. To run it permanently in the background, install it as a [systemd](https://www.freedesktop.org/wiki/Software/systemd/) user service:
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp packaging/forganize@.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now forganize@$(systemd-escape -p ~/Downloads).service
+```
+
+Check on it with `systemctl --user status forganize@*.service` or `journalctl --user -u 'forganize@*' -f`, and stop it with `systemctl --user disable --now forganize@$(systemd-escape -p ~/Downloads).service`.
+
 ## 🧪 Try the demo
 
-A [`demo/`](demo) folder with sample empty files is included so you can see it in action:
+A [`demo/`](demo) folder with sample files is included so you can see it in action:
 
 ```bash
 forganize demo
